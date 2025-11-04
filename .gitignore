@@ -1,0 +1,64 @@
+# ==== Unity ====
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+[Mm]emoryCaptures/
+[Rr]ecordings/
+[Bb]ackup*/
+[Ss]ysinfo.txt
+
+# User-specific
+[Uu]ser[Ss]ettings/
+*.swp
+*.sln
+*.csproj
+*.pidb
+*.user
+*.userprefs
+*.unityproj
+*.booproj
+*.mdb
+*.pdb
+
+# Cache / crash
+[Cc]rash[Ss]/
+*.stacktrace
+
+# Asset Store
+[Aa]sset[Ss]tore/
+
+# Addressables build / StreamingAssets outputs
+Assets/StreamingAssets/aa/*
+!Assets/StreamingAssets/.gitkeep
+
+# TextMesh Pro auto-generated
+Assets/TextMesh Pro/**/Resources/*
+!Assets/TextMesh Pro/**/Resources/Fonts & Materials.meta
+
+# Gradle / Android
+.gradle/
+.gradle*/
+**/GradleCache/
+*.apk
+*.aab
+
+# iOS / Xcode
+DerivedData/
+*.xcworkspace
+*.xcuserdatad/
+
+# VS / VSCode / Rider
+.vs/
+.vscode/
+.idea/
+*.DotSettings.user
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Builds you keep inside project (ปรับชื่อโฟลเดอร์ได้)
+[Bb]uild_*/
