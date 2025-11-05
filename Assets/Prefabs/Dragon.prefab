@@ -22,7 +22,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 7db68191966a75e42815db7bf2eec903, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0
+      value: 6.367265
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 7db68191966a75e42815db7bf2eec903, type: 3}
       propertyPath: m_LocalPosition.y
@@ -30,7 +30,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 7db68191966a75e42815db7bf2eec903, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0
+      value: 10.431005
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 7db68191966a75e42815db7bf2eec903, type: 3}
       propertyPath: m_LocalRotation.w
@@ -80,6 +80,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Dragon
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 7db68191966a75e42815db7bf2eec903, type: 3}
+      propertyPath: m_TagString
+      value: Enemy
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects:
     - {fileID: -7698339372569668063, guid: 7db68191966a75e42815db7bf2eec903, type: 3}
@@ -92,7 +96,39 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 7db68191966a75e42815db7bf2eec903, type: 3}
       insertIndex: -1
       addedObject: {fileID: 4271647295369888590}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 7db68191966a75e42815db7bf2eec903, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 3338252466544123588}
+    - targetCorrespondingSourceObject: {fileID: 6561626390808681529, guid: 7db68191966a75e42815db7bf2eec903, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8722105562968927485}
   m_SourcePrefab: {fileID: 100100000, guid: 7db68191966a75e42815db7bf2eec903, type: 3}
+--- !u!1 &1002810673337399501 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 6561626390808681529, guid: 7db68191966a75e42815db7bf2eec903, type: 3}
+  m_PrefabInstance: {fileID: 6261453263116444916}
+  m_PrefabAsset: {fileID: 0}
+--- !u!65 &8722105562968927485
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1002810673337399501}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 0
+  serializedVersion: 3
+  m_Size: {x: 0.6917554, y: 0.48645386, z: 0.23718569}
+  m_Center: {x: -0.005008173, y: 0.10046203, z: 0.4442984}
 --- !u!1 &6495403701317474725 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 7db68191966a75e42815db7bf2eec903, type: 3}
@@ -132,7 +168,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   enemyType: 1
-  moveSpeed: 5
+  moveSpeed: 1
   health: 50
   attackRange: 2
   attackCooldown: 1.5
@@ -140,3 +176,24 @@ MonoBehaviour:
   projectilePrefab: {fileID: 0}
   firePoint: {fileID: 0}
   projectileSpeed: 10
+--- !u!65 &3338252466544123588
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6495403701317474725}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.7517508, y: 0.30790988, z: 0.6324935}
+  m_Center: {x: -0.054548834, y: 0.43041605, z: -0.18374847}
