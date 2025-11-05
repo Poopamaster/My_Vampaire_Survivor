@@ -1,81 +1,99 @@
 using UnityEngine;
 
-public class PlayerShooting : MonoBehaviour
+public class PlayerShooter : MonoBehaviour
 {
-    [Header("Bullet Settings")]
+    [Header("Shooting Settings")]
     public GameObject bulletPrefab;
     public Transform firePoint;
     public float bulletSpeed = 20f;
-    public float fireRate = 0.3f;
+    public float baseFireDelay = 0.5f;   // delay พื้นฐานระหว่างยิง
+    private float fireTimer = 0f;
 
-    [Header("Powerups")]
-    public int splashCount = 0; // เพิ่มกระสุนกระจาย (0 = ปกติ)
-    public int plusArrowCount = 0; // เพิ่มจำนวนลูกธนูที่ยิงต่อครั้ง (0 = ปกติ)
-
-    private float nextFireTime = 0f;
+    [Header("Power-up Settings")]
+    public int splashCount = 0;          // จำนวนกระสุนกระจาย (จาก SplashArrow)
+    public int plusArrowCount = 0;       // จำนวน PlusArrow
 
     void Update()
     {
-        if (Input.GetButton("Fire1") && Time.time >= nextFireTime)
+        fireTimer -= Time.deltaTime;
+
+        if (Input.GetButton("Fire1") && fireTimer <= 0f)
         {
             Shoot();
-            nextFireTime = Time.time + fireRate;
+
+            // ❗ คำนวณ delay จากจำนวน PlusArrow: ยิ่งมาก ยิ่งยิงเร็ว
+            float delayMultiplier = Mathf.Max(0.2f, 1f - plusArrowCount * 0.15f);
+            fireTimer = baseFireDelay * delayMultiplier;
         }
     }
 
     void Shoot()
     {
-        int totalShoots = plusArrowCount + 1; // เช่น plusArrowCount = 1 → ยิง 2 ชุด
-        float verticalOffset = 0.15f;         // เว้นตำแหน่งกระสุนที่ยิงซ้อน
+        if (!bulletPrefab || !firePoint)
+        {
+            Debug.LogWarning("⚠️ bulletPrefab หรือ firePoint ยังไม่ถูกเซ็ตใน Inspector");
+            return;
+        }
+
+        Debug.Log($"🔫 Shooting! splash={splashCount}, plus={plusArrowCount}");
+
+        int totalShoots = plusArrowCount + 1; // ยิงหลายชุดจาก PlusArrow
+        int totalBullets = splashCount + 1;   // ยิงกระจายจาก SplashArrow
+
+        float spreadAngle = 10f;
+        float startAngle = -spreadAngle * (totalBullets - 1) / 2f;
+
+        float distanceFromPlayer = 2.0f;
+        float verticalOffsetPerSet = 0.4f;
+
+        Collider playerCol = GetComponent<Collider>();
 
         for (int p = 0; p < totalShoots; p++)
         {
-            // ยิงแต่ละชุด (ใช้ splashCount กระจาย)
-            if (splashCount == 0)
+            for (int i = 0; i < totalBullets; i++)
             {
-                GameObject bullet = Instantiate(
-                    bulletPrefab,
-                    firePoint.position + Vector3.up * (p * verticalOffset),
-                    firePoint.rotation
-                );
-                bullet.GetComponent<Rigidbody>().velocity = firePoint.forward * bulletSpeed;
-            }
-            else
-            {
-                int totalBullets = splashCount + 1; // เช่น splashCount = 2 → ยิง 3 ลูก
-                float spreadAngle = 15f;
-                float startAngle = -spreadAngle * (totalBullets - 1) / 2f;
+                float angle = startAngle + i * spreadAngle;
+                Quaternion rot = firePoint.rotation * Quaternion.AngleAxis(angle, Vector3.up);
 
-                for (int i = 0; i < totalBullets; i++)
+                Vector3 spawnPos = firePoint.position +
+                                   rot * Vector3.forward * distanceFromPlayer +
+                                   Vector3.up * (verticalOffsetPerSet * p + 0.5f);
+
+                GameObject bullet = Instantiate(bulletPrefab, spawnPos, rot);
+                Rigidbody rb = bullet.GetComponent<Rigidbody>();
+                Collider bulletCol = bullet.GetComponent<Collider>();
+
+                // 🚫 ป้องกันชน Player เอง
+                if (playerCol && bulletCol)
+                    Physics.IgnoreCollision(playerCol, bulletCol);
+
+                if (rb != null)
                 {
-                    float angle = startAngle + i * spreadAngle;
-                    Quaternion rot = firePoint.rotation * Quaternion.Euler(0, angle, 0);
-
-                    // offset ด้านข้างให้ออกจากศูนย์กลางเล็กน้อย
-                    Vector3 offset = rot * Vector3.right * (i - (totalBullets - 1) / 2f) * 0.2f;
-                    Vector3 spawnPos = firePoint.position + offset + Vector3.up * (p * verticalOffset);
-
-                    GameObject bullet = Instantiate(bulletPrefab, spawnPos, rot);
-                    bullet.GetComponent<Rigidbody>().velocity = rot * Vector3.forward * bulletSpeed;
+                    rb.useGravity = false;
+                    rb.velocity = rot * Vector3.forward * bulletSpeed;
                 }
+
+                Debug.DrawRay(spawnPos, rot * Vector3.forward * 3f, Color.yellow, 1.5f);
             }
         }
     }
 
-    void OnTriggerEnter(Collider other)
+    private void OnTriggerEnter(Collider other)
     {
-        // เก็บ Splash Arrow → เพิ่มจำนวนกระสุนกระจาย
+        // 💥 เก็บ SplashArrow → เพิ่มกระสุนกระจาย
         if (other.CompareTag("SplashArrow"))
         {
-            splashCount = Mathf.Min(splashCount + 1, 3);
+            splashCount = Mathf.Min(splashCount + 1, 3); // จำกัดสูงสุด 3
             Destroy(other.gameObject);
+            Debug.Log("✨ เก็บ SplashArrow → ยิงกระจายเพิ่ม!");
         }
 
-        // เก็บ Plus Arrow → เพิ่มจำนวนลูกธนูที่ยิงต่อครั้ง
+        // 💥 เก็บ PlusArrow → ยิงหลายชุด / ยิงเร็วขึ้น
         if (other.CompareTag("PlusArrow"))
         {
-            plusArrowCount = Mathf.Min(plusArrowCount + 1, 3);
+            plusArrowCount = Mathf.Min(plusArrowCount + 1, 3); // จำกัดสูงสุด 3
             Destroy(other.gameObject);
+            Debug.Log("⚡ เก็บ PlusArrow → ยิงเร็วขึ้น!");
         }
     }
 }

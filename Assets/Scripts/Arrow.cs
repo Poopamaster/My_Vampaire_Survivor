@@ -29,10 +29,11 @@ public class Arrow : MonoBehaviour
             if (enemy != null)
             {
                 enemy.TakeDamage(damage); // ✅ เรียกใช้ฟังก์ชันลดเลือด
+                Destroy(gameObject);
             }
         }
 
         // ทำลายลูกธนูหลังชนอะไรก็ได้
-        Destroy(gameObject);
+        
     }
 }

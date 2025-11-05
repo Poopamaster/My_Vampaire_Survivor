@@ -1039,11 +1039,14 @@ GameObject:
   m_Component:
   - component: {fileID: 5724673986673923081}
   - component: {fileID: 8903782436934981098}
+  - component: {fileID: 4477787391195495774}
   - component: {fileID: 8312549052116508822}
   - component: {fileID: 796054073848323450}
   - component: {fileID: 5916724914183531631}
   - component: {fileID: 9028947578676478370}
   - component: {fileID: 6549727613652587907}
+  - component: {fileID: 6293320570762052015}
+  - component: {fileID: 2992984936523496275}
   m_Layer: 0
   m_Name: foxy
   m_TagString: Player
@@ -1117,6 +1120,23 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!114 &4477787391195495774
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4916224375137373875}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 198b7860b8ae72a479eb4548a6576509, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  swordPrefab: {fileID: 1121285751338703635, guid: 150e31000c24a7b47aae9f04278cb0f5, type: 3}
+  maxSwords: 8
+  radius: 2
+  rotateSpeed: 200
+  heightOffset: 1.5
 --- !u!95 &8312549052116508822
 Animator:
   serializedVersion: 5
@@ -1224,6 +1244,37 @@ MonoBehaviour:
   healthFill: {fileID: 0}
   invincibilityTime: 0.5
   flashSpeed: 0.1
+--- !u!114 &6293320570762052015
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4916224375137373875}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d2df4a1705844de40af13e79b7e7a3bd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  damage: 50
+--- !u!114 &2992984936523496275
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4916224375137373875}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 562acce94783677439e6a0f971e9e0da, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  bulletPrefab: {fileID: 9085035283900303507, guid: caa6e1ee007b2d34da93660bd0568844, type: 3}
+  firePoint: {fileID: 5724673986673923081}
+  bulletSpeed: 20
+  fireRate: 0.3
+  splashCount: 0
+  plusArrowCount: 0
 --- !u!1 &5000354189943208119
 GameObject:
   m_ObjectHideFlags: 0
@@ -1445,6 +1496,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7117406973088091147}
   - component: {fileID: 8796974463424508713}
+  - component: {fileID: 5966605347914867516}
   m_Layer: 0
   m_Name: Hood
   m_TagString: Untagged
@@ -1551,6 +1603,19 @@ SkinnedMeshRenderer:
     m_Center: {x: 2.3283064e-10, y: 0.0034051226, z: -0.000413673}
     m_Extent: {x: 0.003392465, y: 0.005081997, z: 0.004743282}
   m_DirtyAABB: 0
+--- !u!114 &5966605347914867516
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5776948727951324826}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d2df4a1705844de40af13e79b7e7a3bd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  damage: 50
 --- !u!1 &5919477317213542262
 GameObject:
   m_ObjectHideFlags: 0
