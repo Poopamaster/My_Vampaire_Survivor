@@ -1,72 +1,112 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class EnemyWaveSpawner : MonoBehaviour
 {
+    [System.Serializable]
+    public class EnemyGroupData
+    {
+        public GameObject enemyPrefab;
+        public int groupSize = 5;
+        public float spawnInterval = 3f;
+    }
+
     [Header("Spawn Settings")]
-    public GameObject[] enemyPrefabs;     // ศัตรูที่ใช้ spawn ได้ (ใส่ได้หลายตัว เช่น melee, ranged)
-    public Transform player;              // ตัว player ที่ศัตรูจะวิ่งไปหา
-    public float spawnRadius = 20f;       // รัศมีรอบ ๆ player ที่จะสุ่มตำแหน่ง spawn
-    public int startEnemies = 5;          // จำนวนศัตรูเริ่มต้นใน Wave 1
-    public float spawnDelay = 0.3f;       // หน่วงเวลาระหว่าง spawn แต่ละตัว
+    public EnemyGroupData[] enemyGroups;
+    public Transform player;
+    public float spawnRadius = 20f;
 
     [Header("Wave Settings")]
-    public float timeBetweenWaves = 5f;   // เวลาพักระหว่าง Wave
-    public int waveNumber = 0;            // หมายเลข Wave ปัจจุบัน
-    public float difficultyMultiplier = 1.2f; // คูณความยากของศัตรูต่อ Wave
+    public int totalRounds = 15;
+    public float roundDuration = 45f;
+    public float breakDuration = 3f;
+    [Tooltip("คูณความยากต่อรอบ (ค่าแนะนำ 1.15 - 1.25)")]
+    public float difficultyMultiplier = 1.18f;
 
-    private bool spawning = false;
+    [Header("Status (Read Only)")]
+    public int currentRound = 0;
+    public bool isSpawning = false;
+    public bool canDropItem = true; // 🔹 ใช้ควบคุมไม่ให้ดรอประหว่างเวลาลบศัตรูตอนจบ Wave
 
     void Start()
     {
         if (player == null)
             player = GameObject.FindGameObjectWithTag("Player").transform;
 
-        StartCoroutine(SpawnWaves());
+        StartCoroutine(RoundLoop());
     }
 
-    IEnumerator SpawnWaves()
+    IEnumerator RoundLoop()
     {
-        yield return new WaitForSeconds(2f); // หน่วงเริ่มเกมเล็กน้อย
+        yield return new WaitForSeconds(2f);
 
-        while (true)
+        for (currentRound = 1; currentRound <= totalRounds; currentRound++)
         {
-            waveNumber++;
-            int enemyCount = Mathf.RoundToInt(startEnemies * Mathf.Pow(difficultyMultiplier, waveNumber - 1));
+            Debug.Log($"🌀 Round {currentRound} started!");
+            isSpawning = true;
+            canDropItem = true;
 
-            Debug.Log($"🌀 Wave {waveNumber} started! Spawning {enemyCount} enemies...");
+            // เริ่ม spawn ศัตรูแต่ละกลุ่มพร้อมกัน
+            foreach (EnemyGroupData group in enemyGroups)
+                StartCoroutine(SpawnEnemyGroup(group));
 
-            spawning = true;
-            for (int i = 0; i < enemyCount; i++)
+            // เล่นรอบนี้ตามเวลาที่กำหนด
+            yield return new WaitForSeconds(roundDuration);
+
+            // ✅ จบรอบ
+            isSpawning = false;
+            canDropItem = false;
+
+            // ✅ ลบศัตรูทั้งหมดออก
+            ClearAllEnemies();
+
+            Debug.Log($"✅ Round {currentRound} ended! Taking a break...");
+            yield return new WaitForSeconds(breakDuration);
+        }
+
+        Debug.Log("🏆 All Rounds Complete! You Win!");
+        OnGameWin();
+    }
+
+    IEnumerator SpawnEnemyGroup(EnemyGroupData group)
+    {
+        while (isSpawning)
+        {
+            for (int i = 0; i < group.groupSize; i++)
             {
-                SpawnEnemy();
-                yield return new WaitForSeconds(spawnDelay);
+                SpawnEnemy(group.enemyPrefab);
+                yield return new WaitForSeconds(0.15f);
             }
-            spawning = false;
-
-            // รอจนกว่าศัตรูจะหมดก่อนเริ่ม Wave ถัดไป
-            yield return new WaitUntil(() => GameObject.FindGameObjectsWithTag("Enemy").Length == 0);
-
-            Debug.Log($"✅ Wave {waveNumber} cleared!");
-            yield return new WaitForSeconds(timeBetweenWaves);
+            yield return new WaitForSeconds(group.spawnInterval);
         }
     }
 
-    void SpawnEnemy()
+    void SpawnEnemy(GameObject enemyPrefab)
     {
-        if (enemyPrefabs.Length == 0) return;
-
-        GameObject enemyPrefab = enemyPrefabs[Random.Range(0, enemyPrefabs.Length)];
+        if (!enemyPrefab) return;
 
         Vector3 spawnPos = RandomSpawnPosition();
         GameObject enemy = Instantiate(enemyPrefab, spawnPos, Quaternion.identity);
         enemy.tag = "Enemy";
 
+        // ปรับความยากตามรอบ
         EnemyController e = enemy.GetComponent<EnemyController>();
         if (e != null)
         {
-            e.moveSpeed *= Mathf.Pow(difficultyMultiplier, waveNumber - 1);
-            e.health *= Mathf.Pow(difficultyMultiplier, waveNumber - 1);
+            float diff = Mathf.Pow(difficultyMultiplier, currentRound - 1);
+            e.moveSpeed *= diff;
+            e.health *= diff;
+            e.attackDamage *= diff; // ✅ เพิ่มความแรงโจมตี
+        }
+    }
+
+    void ClearAllEnemies()
+    {
+        GameObject[] enemies = GameObject.FindGameObjectsWithTag("Enemy");
+        foreach (GameObject e in enemies)
+        {
+            Destroy(e);
         }
     }
 
@@ -76,5 +116,12 @@ public class EnemyWaveSpawner : MonoBehaviour
         Vector3 pos = new Vector3(randomCircle.x, 0f, randomCircle.y);
         pos += player.position;
         return pos;
+    }
+
+    void OnGameWin()
+    {
+        Debug.Log("🎉 VICTORY! GAME COMPLETE!");
+        // ตัวอย่าง: ไปหน้า Victory Scene
+        // SceneManager.LoadScene("VictoryScene");
     }
 }

@@ -1,89 +1,56 @@
 using UnityEngine;
-using System.Collections.Generic;
 using System.Collections;
+using System.Collections.Generic;
 
 public class WaveItemSpawner : MonoBehaviour
 {
     [System.Serializable]
     public class ItemSpawnData
     {
-        public GameObject itemPrefab; // prefab ของ item เช่น CircleSwordPickup
-        public int minPerWave = 0;
-        public int maxPerWave = 2;
+        public GameObject itemPrefab;
+        [Range(0f, 100f)] public float dropChance = 10f; // ✅ เปลี่ยนเป็นเปอร์เซ็นต์ดรอป
     }
 
-    [Header("Item Spawn Settings")]
+    [Header("Item Drop Settings")]
     public List<ItemSpawnData> itemsToSpawn;
-    public Transform player;           // reference ไปยัง Player
-    public float spawnRadius = 10f;    // รัศมีรอบๆ player ที่จะสุ่มเกิด
-    public LayerMask groundMask;       // สำหรับวางบนพื้น
-    public float itemHeight = 0.5f;    // ความสูงจากพื้นเวลาสร้าง item
+    public LayerMask groundMask;
+    public float itemHeight = 0.5f;
 
-    [Header("Wave Sync")]
-    public EnemyWaveSpawner waveSpawner; // อ้างอิงระบบ wave ของคุณ
+    [Header("Wave Sync (Optional)")]
+    public EnemyWaveSpawner waveSpawner;
 
-    private int currentWave = 0;
+    public static WaveItemSpawner Instance;
 
-    void Start()
+    void Awake()
     {
-        if (waveSpawner == null)
-        {
-            waveSpawner = FindObjectOfType<EnemyWaveSpawner>();
-        }
-
-        if (player == null)
-        {
-            player = GameObject.FindGameObjectWithTag("Player").transform;
-        }
-
-        // สมัคร event ถ้ามีระบบ wave event (หรือคุณจะเรียก SpawnItemsPerWave() จาก EnemyWaveSpawner ก็ได้)
-        StartCoroutine(CheckWaveProgress());
+        Instance = this;
     }
 
-    IEnumerator CheckWaveProgress()
+    public void TrySpawnItem(Vector3 deathPosition)
     {
-        while (true)
-        {
-            if (waveSpawner != null && waveSpawner.waveNumber > currentWave)
-            {
-                currentWave = waveSpawner.waveNumber;
-                SpawnItemsPerWave(currentWave);
-            }
-            yield return new WaitForSeconds(1f);
-        }
-    }
-
-    void SpawnItemsPerWave(int wave)
-    {
-        Debug.Log($"🎁 Spawning upgrade items for Wave {wave}");
+        if (itemsToSpawn == null || itemsToSpawn.Count == 0)
+            return;
 
         foreach (var item in itemsToSpawn)
         {
-            int spawnCount = Random.Range(item.minPerWave, item.maxPerWave + 1);
-            for (int i = 0; i < spawnCount; i++)
+            float roll = Random.Range(0f, 100f);
+            if (roll <= item.dropChance)
             {
-                Vector3 spawnPos = GetRandomPositionAroundPlayer();
-                GameObject newItem = Instantiate(item.itemPrefab, spawnPos, Quaternion.identity);
-                Debug.Log($"🪄 Spawned {newItem.name} at {spawnPos}");
+                Vector3 spawnPos = GetGroundPosition(deathPosition);
+                Instantiate(item.itemPrefab, spawnPos, Quaternion.identity);
+                Debug.Log($"💎 Dropped: {item.itemPrefab.name} ({item.dropChance}%)");
+                break; // ดรอปได้แค่ 1 อย่างต่อศัตรู
             }
         }
     }
 
-    Vector3 GetRandomPositionAroundPlayer()
+    Vector3 GetGroundPosition(Vector3 origin)
     {
-        Vector2 randomCircle = Random.insideUnitCircle.normalized * Random.Range(3f, spawnRadius);
-        Vector3 pos = new Vector3(randomCircle.x, 10f, randomCircle.y) + player.position;
-
-        // raycast หาพื้น
-        if (Physics.Raycast(pos, Vector3.down, out RaycastHit hit, 20f, groundMask))
+        Vector3 pos = origin + Vector3.up * 5f;
+        if (Physics.Raycast(pos, Vector3.down, out RaycastHit hit, 10f, groundMask))
         {
-            pos.y = hit.point.y + itemHeight;
+            pos = hit.point + Vector3.up * itemHeight;
         }
-        else
-        {
-            pos.y = player.position.y + itemHeight;
-        }
-
         return pos;
     }
 }

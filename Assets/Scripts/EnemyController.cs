@@ -20,6 +20,7 @@ public class EnemyController : MonoBehaviour
     private Transform player;
     private PlayerHealth playerHealth; // ✅ อ้างอิงสคริปต์เลือดของ Player
     private float attackTimer;
+    internal float attackDamage;
 
     void Start()
     {
@@ -106,10 +107,27 @@ public class EnemyController : MonoBehaviour
             Die();
         }
     }
-
     void Die()
     {
-        Debug.Log($"{name} has died!");
+        // ✅ ถ้า WaveSpawner ห้ามดรอปตอนนี้ → ข้าม
+        if (EnemyWaveSpawnerInstanceExists() && !FindObjectOfType<EnemyWaveSpawner>().canDropItem)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
+        // ✅ ถ้ามีระบบดรอปไอเท็ม
+        if (WaveItemSpawner.Instance != null)
+        {
+            WaveItemSpawner.Instance.TrySpawnItem(transform.position);
+        }
+
         Destroy(gameObject);
     }
+
+    bool EnemyWaveSpawnerInstanceExists()
+    {
+        return FindObjectOfType<EnemyWaveSpawner>() != null;
+    }
+
 }
