@@ -11,9 +11,11 @@ GameObject:
   - component: {fileID: 3769220715584369289}
   - component: {fileID: 779638984800686557}
   - component: {fileID: 7325218611434284738}
+  - component: {fileID: -8140182079149010329}
+  - component: {fileID: -2880651860735311667}
   m_Layer: 0
   m_Name: SplashArrow
-  m_TagString: Untagged
+  m_TagString: SplashArrow
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -83,3 +85,43 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!65 &-8140182079149010329
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7337760789628030846}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1.7029736, y: 1.0548013, z: 2.2390108}
+  m_Center: {x: 0.42488086, y: 0.4058984, z: 0.07306576}
+--- !u!114 &-2880651860735311667
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7337760789628030846}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4fe0246953a4391419fc9e12c5f2f9a4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  floatAmplitude: 0.25
+  floatFrequency: 2
+  rotateSpeed: 50
+  lifetime: 15
+  auraColor: {r: 0.230941, g: 0, b: 0.509434, a: 0.6}
+  auraIntensity: 10
+  auraRange: 3

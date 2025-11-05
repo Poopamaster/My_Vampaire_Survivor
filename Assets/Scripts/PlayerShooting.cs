@@ -6,25 +6,62 @@ public class PlayerShooter : MonoBehaviour
     public GameObject bulletPrefab;
     public Transform firePoint;
     public float bulletSpeed = 20f;
-    public float baseFireDelay = 0.5f;   // delay พื้นฐานระหว่างยิง
+    public float baseFireDelay = 0.5f;
+    public float detectionRadius = 20f; // ระยะตรวจหาศัตรู
     private float fireTimer = 0f;
 
     [Header("Power-up Settings")]
-    public int splashCount = 0;          // จำนวนกระสุนกระจาย (จาก SplashArrow)
-    public int plusArrowCount = 0;       // จำนวน PlusArrow
+    public int splashCount = 0;     // จำนวนกระสุนกระจาย
+    public int plusArrowCount = 0;  // จำนวน PlusArrow
 
     void Update()
     {
         fireTimer -= Time.deltaTime;
 
-        if (Input.GetButton("Fire1") && fireTimer <= 0f)
+        // ✅ ยิงอัตโนมัติเมื่อมีเป้าหมายใกล้ที่สุด
+        if (fireTimer <= 0f)
         {
-            Shoot();
+            Transform nearestEnemy = FindNearestEnemy();
 
-            // ❗ คำนวณ delay จากจำนวน PlusArrow: ยิ่งมาก ยิ่งยิงเร็ว
-            float delayMultiplier = Mathf.Max(0.2f, 1f - plusArrowCount * 0.15f);
-            fireTimer = baseFireDelay * delayMultiplier;
+            if (nearestEnemy != null)
+            {
+                // หมุน firePoint ไปทางศัตรู
+                Vector3 dir = (nearestEnemy.position - firePoint.position).normalized;
+                firePoint.rotation = Quaternion.LookRotation(new Vector3(dir.x, 0f, dir.z));
+
+                // ยิงเลย
+                Shoot();
+
+                // delay ตามจำนวน plusArrow
+                float delayMultiplier = Mathf.Max(0.2f, 1f - plusArrowCount * 0.15f);
+                fireTimer = baseFireDelay * delayMultiplier;
+            }
         }
+    }
+
+    /// <summary>
+    /// 🔍 หาศัตรูที่อยู่ใกล้ Player ที่สุดในระยะที่กำหนด
+    /// </summary>
+    Transform FindNearestEnemy()
+    {
+        Collider[] hitColliders = Physics.OverlapSphere(transform.position, detectionRadius);
+        Transform nearest = null;
+        float minDistance = Mathf.Infinity;
+
+        foreach (Collider col in hitColliders)
+        {
+            if (col.CompareTag("Enemy"))
+            {
+                float dist = Vector3.Distance(transform.position, col.transform.position);
+                if (dist < minDistance)
+                {
+                    minDistance = dist;
+                    nearest = col.transform;
+                }
+            }
+        }
+
+        return nearest;
     }
 
     void Shoot()
@@ -35,14 +72,11 @@ public class PlayerShooter : MonoBehaviour
             return;
         }
 
-        Debug.Log($"🔫 Shooting! splash={splashCount}, plus={plusArrowCount}");
-
-        int totalShoots = plusArrowCount + 1; // ยิงหลายชุดจาก PlusArrow
-        int totalBullets = splashCount + 1;   // ยิงกระจายจาก SplashArrow
+        int totalShoots = plusArrowCount + 1;
+        int totalBullets = splashCount + 1;
 
         float spreadAngle = 10f;
         float startAngle = -spreadAngle * (totalBullets - 1) / 2f;
-
         float distanceFromPlayer = 2.0f;
         float verticalOffsetPerSet = 0.4f;
 
@@ -63,7 +97,6 @@ public class PlayerShooter : MonoBehaviour
                 Rigidbody rb = bullet.GetComponent<Rigidbody>();
                 Collider bulletCol = bullet.GetComponent<Collider>();
 
-                // 🚫 ป้องกันชน Player เอง
                 if (playerCol && bulletCol)
                     Physics.IgnoreCollision(playerCol, bulletCol);
 
@@ -72,8 +105,6 @@ public class PlayerShooter : MonoBehaviour
                     rb.useGravity = false;
                     rb.velocity = rot * Vector3.forward * bulletSpeed;
                 }
-
-                Debug.DrawRay(spawnPos, rot * Vector3.forward * 3f, Color.yellow, 1.5f);
             }
         }
     }
@@ -83,7 +114,7 @@ public class PlayerShooter : MonoBehaviour
         // 💥 เก็บ SplashArrow → เพิ่มกระสุนกระจาย
         if (other.CompareTag("SplashArrow"))
         {
-            splashCount = Mathf.Min(splashCount + 1, 3); // จำกัดสูงสุด 3
+            splashCount = Mathf.Min(splashCount + 1, 3);
             Destroy(other.gameObject);
             Debug.Log("✨ เก็บ SplashArrow → ยิงกระจายเพิ่ม!");
         }
@@ -91,9 +122,15 @@ public class PlayerShooter : MonoBehaviour
         // 💥 เก็บ PlusArrow → ยิงหลายชุด / ยิงเร็วขึ้น
         if (other.CompareTag("PlusArrow"))
         {
-            plusArrowCount = Mathf.Min(plusArrowCount + 1, 3); // จำกัดสูงสุด 3
+            plusArrowCount = Mathf.Min(plusArrowCount + 1, 3);
             Destroy(other.gameObject);
             Debug.Log("⚡ เก็บ PlusArrow → ยิงเร็วขึ้น!");
         }
+    }
+
+    void OnDrawGizmosSelected()
+    {
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(transform.position, detectionRadius);
     }
 }

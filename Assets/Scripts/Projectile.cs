@@ -21,7 +21,6 @@ public class Projectile : MonoBehaviour
             }
         }
 
-        // ทำลายตัวกระสุนทุกครั้งที่ชนอะไร
         Destroy(gameObject);
     }
 }
