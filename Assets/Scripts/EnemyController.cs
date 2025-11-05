@@ -18,11 +18,17 @@ public class EnemyController : MonoBehaviour
     public float projectileSpeed = 10f;
 
     private Transform player;
+    private PlayerHealth playerHealth; // ✅ อ้างอิงสคริปต์เลือดของ Player
     private float attackTimer;
 
     void Start()
     {
-        player = GameObject.FindGameObjectWithTag("Player")?.transform;
+        GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
+        if (playerObj != null)
+        {
+            player = playerObj.transform;
+            playerHealth = playerObj.GetComponent<PlayerHealth>();
+        }
 
         if (enemyType == EnemyType.Ranged && firePoint == null)
         {
@@ -44,6 +50,7 @@ public class EnemyController : MonoBehaviour
 
         if (distance > attackRange)
         {
+            // เดินเข้าไปหาผู้เล่น
             transform.position += direction * moveSpeed * Time.deltaTime;
         }
         else
@@ -64,6 +71,12 @@ public class EnemyController : MonoBehaviour
         if (enemyType == EnemyType.Melee)
         {
             Debug.Log($"{name} attacks player (Melee)!");
+
+            // ✅ ถ้าอยู่ในระยะโจมตี ให้ลดเลือดผู้เล่น
+            if (playerHealth != null)
+            {
+                playerHealth.TakeDamage(damage);
+            }
         }
         else if (enemyType == EnemyType.Ranged && projectilePrefab != null)
         {
@@ -74,6 +87,13 @@ public class EnemyController : MonoBehaviour
             {
                 Vector3 dir = (player.position - firePoint.position).normalized;
                 rb.velocity = dir * projectileSpeed;
+            }
+
+            // ✅ ตั้งค่าความเสียหายของ projectile ด้วย
+            Projectile p = proj.GetComponent<Projectile>();
+            if (p != null)
+            {
+                p.damage = damage;
             }
         }
     }

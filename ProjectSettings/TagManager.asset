@@ -5,14 +5,17 @@ TagManager:
   serializedVersion: 2
   tags:
   - Enemy
+  - CircleSword
+  - SplashArrow
+  - PlusArrow
   layers:
   - Default
   - TransparentFX
   - Ignore Raycast
-  - 
+  - Arrow
   - Water
   - UI
-  - 
+  - Player
   - 
   - 
   - 
