@@ -1,5 +1,4 @@
 using UnityEngine;
-using System.Collections;
 using System.Collections.Generic;
 
 public class WaveItemSpawner : MonoBehaviour
@@ -8,16 +7,21 @@ public class WaveItemSpawner : MonoBehaviour
     public class ItemSpawnData
     {
         public GameObject itemPrefab;
-        [Range(0f, 100f)] public float dropChance = 10f; // ✅ เปลี่ยนเป็นเปอร์เซ็นต์ดรอป
+        [Range(0f, 100f)] public float dropChance = 10f; // % ดรอปเมื่อศัตรูตาย
     }
 
     [Header("Item Drop Settings")]
     public List<ItemSpawnData> itemsToSpawn;
     public LayerMask groundMask;
-    public float itemHeight = 0.5f;
+    public float itemHeight = 0.3f;
 
-    [Header("Wave Sync (Optional)")]
+    [Header("Wave Sync")]
     public EnemyWaveSpawner waveSpawner;
+    [Tooltip("จำนวนของดรอปสูงสุดต่อ 1 เวฟ")]
+    public int maxItemsPerWave = 2;
+
+    private int itemsDroppedThisWave = 0;
+    private int lastSeenRound = 0;
 
     public static WaveItemSpawner Instance;
 
@@ -26,31 +30,60 @@ public class WaveItemSpawner : MonoBehaviour
         Instance = this;
     }
 
+    void Start()
+    {
+        if (waveSpawner == null)
+            waveSpawner = FindObjectOfType<EnemyWaveSpawner>();
+
+        if (waveSpawner != null)
+            lastSeenRound = Mathf.Max(0, waveSpawner.currentRound);
+    }
+
     public void TrySpawnItem(Vector3 deathPosition)
     {
-        if (itemsToSpawn == null || itemsToSpawn.Count == 0)
-            return;
+        AutoResetIfNewRound();
+
+        if (itemsDroppedThisWave >= maxItemsPerWave) return;
+
+        if (itemsToSpawn == null || itemsToSpawn.Count == 0) return;
 
         foreach (var item in itemsToSpawn)
         {
             float roll = Random.Range(0f, 100f);
             if (roll <= item.dropChance)
             {
-                Vector3 spawnPos = GetGroundPosition(deathPosition);
+                Vector3 spawnPos = GroundedPosition(deathPosition);
                 Instantiate(item.itemPrefab, spawnPos, Quaternion.identity);
-                Debug.Log($"💎 Dropped: {item.itemPrefab.name} ({item.dropChance}%)");
-                break; // ดรอปได้แค่ 1 อย่างต่อศัตรู
+
+                itemsDroppedThisWave++; // นับเพิ่มทันทีที่สปอว์น
+                break;
             }
         }
     }
 
-    Vector3 GetGroundPosition(Vector3 origin)
+    public void ResetDropsForNewWave(int roundIndex)
     {
-        Vector3 pos = origin + Vector3.up * 5f;
-        if (Physics.Raycast(pos, Vector3.down, out RaycastHit hit, 10f, groundMask))
+        lastSeenRound = roundIndex;
+        itemsDroppedThisWave = 0;
+    }
+
+    private void AutoResetIfNewRound()
+    {
+        if (waveSpawner == null) return;
+        if (waveSpawner.currentRound != lastSeenRound)
         {
-            pos = hit.point + Vector3.up * itemHeight;
+            lastSeenRound = waveSpawner.currentRound;
+            itemsDroppedThisWave = 0;
         }
-        return pos;
+    }
+
+    private Vector3 GroundedPosition(Vector3 near)
+    {
+        Vector3 pos = near + Vector3.up * 5f;
+        if (Physics.Raycast(pos, Vector3.down, out RaycastHit hit, 20f, groundMask))
+            return hit.point + Vector3.up * itemHeight;
+
+        // fallback
+        return near + Vector3.up * itemHeight;
     }
 }
