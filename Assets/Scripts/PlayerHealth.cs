@@ -67,7 +67,7 @@ public class PlayerHealth : MonoBehaviour
         // ✅ เล่นเสียงเจ็บทุกครั้งที่โดนตี
         if (AudioManager.instance != null && hurtSound != null)
         {
-            AudioManager.instance.PlaySound(hurtSound,2f);
+            AudioManager.instance.PlaySound(hurtSound);
         }
 
         UpdateHealthUI();
@@ -137,4 +137,17 @@ public class PlayerHealth : MonoBehaviour
             Debug.LogError("uiManager is not assigned in PlayerHealth!");
         }
     }
+
+    void OnTriggerEnter(Collider other)
+{
+    if (other.CompareTag("Heart"))
+    {
+        Heal(50f);
+        Destroy(other.gameObject);
+        Debug.Log(" เก็บหัวใจ! ฟื้นฟูเลือด 50 หน่วย");
+    }
+}
+
+
+
 }

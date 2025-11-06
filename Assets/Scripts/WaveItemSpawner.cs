@@ -15,13 +15,18 @@ public class WaveItemSpawner : MonoBehaviour
     public LayerMask groundMask;
     public float itemHeight = 0.3f;
 
+    [Header("Guaranteed Drop (1 per Wave)")]
+    [Tooltip("ของที่ดรอปแน่นอน 1 ชิ้นต่อเวฟ")]
+    public GameObject guaranteedItemPrefab;
+
     [Header("Wave Sync")]
     public EnemyWaveSpawner waveSpawner;
-    [Tooltip("จำนวนของดรอปสูงสุดต่อ 1 เวฟ")]
+    [Tooltip("จำนวนของดรอปสูงสุดต่อ 1 เวฟ (รวมของสุ่มทั้งหมด)")]
     public int maxItemsPerWave = 2;
 
     private int itemsDroppedThisWave = 0;
     private int lastSeenRound = 0;
+    private bool guaranteedItemDropped = false;
 
     public static WaveItemSpawner Instance;
 
@@ -43,9 +48,23 @@ public class WaveItemSpawner : MonoBehaviour
     {
         AutoResetIfNewRound();
 
-        if (itemsDroppedThisWave >= maxItemsPerWave) return;
+        if (itemsToSpawn == null || itemsToSpawn.Count == 0)
+            return;
 
-        if (itemsToSpawn == null || itemsToSpawn.Count == 0) return;
+        // ✅ ถ้ายังไม่ได้ดรอปของแน่นอน ให้ดรอปตอนนี้เลย
+        if (!guaranteedItemDropped && guaranteedItemPrefab != null)
+        {
+            Vector3 spawnPos = GroundedPosition(deathPosition);
+            Instantiate(guaranteedItemPrefab, spawnPos, Quaternion.identity);
+
+            guaranteedItemDropped = true;
+            itemsDroppedThisWave++;
+            return;
+        }
+
+        // ✅ ดรอปของสุ่มตามโอกาส
+        if (itemsDroppedThisWave >= maxItemsPerWave)
+            return;
 
         foreach (var item in itemsToSpawn)
         {
@@ -55,7 +74,7 @@ public class WaveItemSpawner : MonoBehaviour
                 Vector3 spawnPos = GroundedPosition(deathPosition);
                 Instantiate(item.itemPrefab, spawnPos, Quaternion.identity);
 
-                itemsDroppedThisWave++; // นับเพิ่มทันทีที่สปอว์น
+                itemsDroppedThisWave++;
                 break;
             }
         }
@@ -65,6 +84,7 @@ public class WaveItemSpawner : MonoBehaviour
     {
         lastSeenRound = roundIndex;
         itemsDroppedThisWave = 0;
+        guaranteedItemDropped = false; // ✅ รีเซ็ตให้ดรอปของแน่นอนได้ใหม่
     }
 
     private void AutoResetIfNewRound()
@@ -74,6 +94,7 @@ public class WaveItemSpawner : MonoBehaviour
         {
             lastSeenRound = waveSpawner.currentRound;
             itemsDroppedThisWave = 0;
+            guaranteedItemDropped = false;
         }
     }
 
