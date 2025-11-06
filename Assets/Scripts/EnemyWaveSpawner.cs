@@ -14,8 +14,8 @@ public class EnemyWaveSpawner : MonoBehaviour
     [Header("Spawn Settings")]
     public EnemyGroupData[] enemyGroups;
     public Transform player;
-    public GameObject spawnArea; // ✅ วัตถุ Plane หลัก
-    public float spawnHeightOffset = 0.2f; // เผื่อให้ศัตรูลอยจากพื้นเล็กน้อย
+    public GameObject spawnArea;
+    public float spawnHeightOffset = 0.2f;
 
     [Header("Wave Settings")]
     public int totalRounds = 15;
@@ -23,12 +23,18 @@ public class EnemyWaveSpawner : MonoBehaviour
     public float breakDuration = 3f;
     public float difficultyMultiplier = 1.18f;
 
+    [Header("UI Reference")]
+    public WaveUI waveUI;
+
     [Header("Status (Read Only)")]
     public int currentRound = 0;
     public bool isSpawning = false;
+    public float currentRoundTimeRemaining = 0f;
+    public float currentBreakTimeRemaining = 0f;
 
     public bool canDropItem = true;
     private Bounds areaBounds;
+    private Coroutine roundCoroutine;
 
     void Start()
     {
@@ -37,7 +43,6 @@ public class EnemyWaveSpawner : MonoBehaviour
 
         if (spawnArea != null)
         {
-            // ✅ ดึงขนาดของ plane
             Renderer rend = spawnArea.GetComponent<Renderer>();
             Collider col = spawnArea.GetComponent<Collider>();
             if (rend != null)
@@ -50,7 +55,33 @@ public class EnemyWaveSpawner : MonoBehaviour
             Debug.LogWarning("⚠️ spawnArea ยังไม่ถูกกำหนดใน Inspector");
         }
 
-        StartCoroutine(RoundLoop());
+        if (waveUI == null)
+            waveUI = FindObjectOfType<WaveUI>();
+
+        StartWaveSystem();
+    }
+
+    void Update()
+    {
+        // อัพเดทเวลาเหลือสำหรับ UI
+        if (isSpawning)
+        {
+            currentRoundTimeRemaining -= Time.deltaTime;
+            currentRoundTimeRemaining = Mathf.Max(0f, currentRoundTimeRemaining);
+        }
+        else if (currentRound < totalRounds && currentRound > 0)
+        {
+            currentBreakTimeRemaining -= Time.deltaTime;
+            currentBreakTimeRemaining = Mathf.Max(0f, currentBreakTimeRemaining);
+        }
+    }
+
+    public void StartWaveSystem()
+    {
+        if (roundCoroutine != null)
+            StopCoroutine(roundCoroutine);
+        
+        roundCoroutine = StartCoroutine(RoundLoop());
     }
 
     IEnumerator RoundLoop()
@@ -59,17 +90,35 @@ public class EnemyWaveSpawner : MonoBehaviour
 
         for (currentRound = 1; currentRound <= totalRounds; currentRound++)
         {
+            // เริ่ม Wave ใหม่
             isSpawning = true;
+            currentRoundTimeRemaining = roundDuration;
+            currentBreakTimeRemaining = 0f;
 
+            // เริ่ม Spawn ศัตรูทั้งหมดในกลุ่ม
             foreach (var group in enemyGroups)
                 StartCoroutine(SpawnEnemyGroup(group));
 
+            // รอจนกว่าเวลาของ Wave จะหมด
             yield return new WaitForSeconds(roundDuration);
 
             isSpawning = false;
             ClearAllEnemies();
-            yield return new WaitForSeconds(breakDuration);
+            
+            // ถ้ายังไม่ใช่ Wave สุดท้าย ให้พัก
+            if (currentRound < totalRounds)
+            {
+                currentBreakTimeRemaining = breakDuration;
+                yield return new WaitForSeconds(breakDuration);
+            }
         }
+
+        // จบเกม
+        isSpawning = false;
+        currentRoundTimeRemaining = 0f;
+        currentBreakTimeRemaining = 0f;
+        
+        Debug.Log("All waves completed!");
     }
 
     IEnumerator SpawnEnemyGroup(EnemyGroupData group)
@@ -107,7 +156,6 @@ public class EnemyWaveSpawner : MonoBehaviour
 
     Vector3 RandomPointInPlane()
     {
-        // ✅ สุ่มตำแหน่งในขอบ plane
         float x = Random.Range(areaBounds.min.x, areaBounds.max.x);
         float z = Random.Range(areaBounds.min.z, areaBounds.max.z);
         float y = areaBounds.center.y;
@@ -119,5 +167,21 @@ public class EnemyWaveSpawner : MonoBehaviour
     {
         foreach (var e in GameObject.FindGameObjectsWithTag("Enemy"))
             Destroy(e);
+    }
+
+    // Method สำหรับดึงสถานะปัจจุบัน (ใช้โดย UI)
+    public bool IsInBreakTime()
+    {
+        return !isSpawning && currentRound < totalRounds && currentRound > 0;
+    }
+
+    public float GetRoundTimeRemaining()
+    {
+        return currentRoundTimeRemaining;
+    }
+
+    public float GetBreakTimeRemaining()
+    {
+        return currentBreakTimeRemaining;
     }
 }

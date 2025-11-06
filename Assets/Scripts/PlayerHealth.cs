@@ -9,12 +9,17 @@ public class PlayerHealth : MonoBehaviour
     public float currentHealth;
 
     [Header("UI")]
-    public Slider healthBar;     // แถบพลังชีวิตใน Canvas
-    public Image healthFill;     // ส่วนที่เป็นสี (fill) ของแถบเลือด
+    public Slider healthBar;
+    public Image healthFill;
+
+    // --- 1. เพิ่มบรรทัดนี้ ---
+    // (ลาก GameUIManager มาใส่ในช่องนี้)
+    [Header("Game Over")]
+    public GameUIManager uiManager; 
 
     [Header("Damage Settings")]
-    public float invincibilityTime = 0.5f; // เวลาอมตะหลังโดนตี
-    public float flashSpeed = 0.1f;        // ความเร็วการกระพริบ
+    public float invincibilityTime = 0.5f;
+    public float flashSpeed = 0.1f;
 
     private bool isInvincible = false;
     private bool isDead = false;
@@ -23,14 +28,11 @@ public class PlayerHealth : MonoBehaviour
     void Start()
     {
         currentHealth = maxHealth;
-
         if (healthBar != null)
         {
             healthBar.maxValue = maxHealth;
             healthBar.value = currentHealth;
         }
-
-        // เก็บ Renderer ทั้งหมดของ Player ไว้ใช้กระพริบ
         renderers = GetComponentsInChildren<Renderer>();
     }
 
@@ -40,35 +42,31 @@ public class PlayerHealth : MonoBehaviour
 
         currentHealth -= amount;
         currentHealth = Mathf.Clamp(currentHealth, 0, maxHealth);
-
         Debug.Log($"Player took {amount} damage. HP: {currentHealth}/{maxHealth}");
-
         UpdateHealthUI();
 
         if (currentHealth <= 0)
-            Die();
+            Die(); // <-- เรียกฟังก์ชัน Die()
         else
             StartCoroutine(InvincibilityFlash());
     }
 
     public void Heal(float amount)
     {
+        // ... (โค้ดส่วนนี้เหมือนเดิม) ...
         if (isDead) return;
-
         currentHealth += amount;
         currentHealth = Mathf.Clamp(currentHealth, 0, maxHealth);
-
         UpdateHealthUI();
     }
 
     void UpdateHealthUI()
     {
+        // ... (โค้ดส่วนนี้เหมือนเดิม) ...
         if (healthBar != null)
             healthBar.value = currentHealth;
-
         if (healthFill != null)
         {
-            // ปรับสีตามเปอร์เซ็นต์เลือด
             float t = currentHealth / maxHealth;
             healthFill.color = Color.Lerp(Color.red, Color.green, t);
         }
@@ -76,23 +74,18 @@ public class PlayerHealth : MonoBehaviour
 
     IEnumerator InvincibilityFlash()
     {
+        // ... (โค้ดส่วนนี้เหมือนเดิม) ...
         isInvincible = true;
         float timer = 0f;
-
         while (timer < invincibilityTime)
         {
-            // กระพริบตัว (เปิด/ปิด Renderer)
             foreach (Renderer r in renderers)
                 r.enabled = !r.enabled;
-
             yield return new WaitForSeconds(flashSpeed);
             timer += flashSpeed;
         }
-
-        // เปิด Renderer กลับให้ครบ
         foreach (Renderer r in renderers)
             r.enabled = true;
-
         isInvincible = false;
     }
 
@@ -106,6 +99,15 @@ public class PlayerHealth : MonoBehaviour
         if (controller != null)
             controller.enabled = false;
 
-        // TODO: ใส่แอนิเมชันตายหรือรีเซ็ตฉาก
+        // --- 2. เพิ่ม 3 บรรทัดนี้! ---
+        // (นี่คือการ "เรียก" หน้า Game Over)
+        if (uiManager != null)
+        {
+            uiManager.ShowGameOverScreen();
+        }
+        else
+        {
+            Debug.LogError("uiManager is not assigned in PlayerHealth!");
+        }
     }
 }
