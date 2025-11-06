@@ -12,8 +12,17 @@ public class GameManager : MonoBehaviour
     public Slider musicSlider;
     public Slider soundSlider;
 
+    [Header("Button Sound")]
+    public AudioClip buttonClickSound; // เสียงตอนกดปุ่ม
+    private AudioSource buttonAudioSource; // แหล่งเสียงสำหรับเล่นเฉพาะเสียงปุ่ม
+
     private void Start()
     {
+        // ✅ เพิ่ม AudioSource สำหรับเสียงปุ่ม
+        buttonAudioSource = gameObject.AddComponent<AudioSource>();
+        buttonAudioSource.playOnAwake = false;
+        buttonAudioSource.spatialBlend = 0f; // เสียง 2D
+
         // ตั้งค่าเสียงเริ่มต้นที่ 50%
         SetInitialVolumes();
         
@@ -24,10 +33,18 @@ public class GameManager : MonoBehaviour
         LoadSettings();
     }
 
-    // ตั้งค่าเสียงเริ่มต้นที่ 50%
+    // === ฟังก์ชันเล่นเสียงปุ่ม ===
+    private void PlayButtonClick()
+    {
+        if (buttonClickSound != null && buttonAudioSource != null)
+        {
+            buttonAudioSource.PlayOneShot(buttonClickSound, soundSlider != null ? soundSlider.value : 0.5f);
+        }
+    }
+
+    // === ตั้งค่าเสียงเริ่มต้นที่ 50% ===
     private void SetInitialVolumes()
     {
-        // บังคับตั้งค่าเริ่มต้น 50% ถ้ายังไม่เคยบันทึก
         if (!PlayerPrefs.HasKey("MusicVolume") || !PlayerPrefs.HasKey("SoundVolume"))
         {
             PlayerPrefs.SetFloat("MusicVolume", 0.5f);
@@ -39,32 +56,22 @@ public class GameManager : MonoBehaviour
     // === ปุ่ม MAIN MENU ===
     public void OnPlayButtonClicked()
     {
-        // เล่นเสียง effect เมื่อกดปุ่ม (อยู่ในหมวด Sound)
-        AudioManager.instance.PlayButtonClick();
-        
-        // โหลดหน้า PlayScenes
+        PlayButtonClick();
         SceneManager.LoadScene("PlayScenes");
     }
 
     public void OnSettingsButtonClicked()
     {
-        // เล่นเสียง effect เมื่อกดปุ่ม (อยู่ในหมวด Sound)
-        AudioManager.instance.PlayButtonClick();
-        
-        // แสดงหน้า Settings
+        PlayButtonClick();
         ShowSettings();
     }
 
     public void OnQuitButtonClicked()
     {
-        // เล่นเสียง effect เมื่อกดปุ่ม (อยู่ในหมวด Sound)
-        AudioManager.instance.PlayButtonClick();
-        
-        // ออกจากเกม
+        PlayButtonClick();
         Debug.Log("Quitting game...");
         Application.Quit();
-        
-        // สำหรับการทดสอบใน Editor
+
         #if UNITY_EDITOR
         UnityEditor.EditorApplication.isPlaying = false;
         #endif
@@ -73,7 +80,6 @@ public class GameManager : MonoBehaviour
     // === ปุ่ม SETTINGS ===
     public void OnMusicVolumeChanged()
     {
-        // ปรับเสียง background music เท่านั้น
         if (AudioManager.instance != null)
         {
             AudioManager.instance.SetMusicVolume(musicSlider.value);
@@ -83,7 +89,6 @@ public class GameManager : MonoBehaviour
 
     public void OnSoundVolumeChanged()
     {
-        // ปรับเสียง effect ทุกชนิด (ปุ่ม, 効果เกม, ฯลฯ)
         if (AudioManager.instance != null)
         {
             AudioManager.instance.SetSoundVolume(soundSlider.value);
@@ -93,10 +98,7 @@ public class GameManager : MonoBehaviour
 
     public void OnBackButtonClicked()
     {
-        // เล่นเสียง effect เมื่อกดปุ่ม (อยู่ในหมวด Sound)
-        AudioManager.instance.PlayButtonClick();
-        
-        // กลับไปหน้า Main Menu
+        PlayButtonClick();
         ShowMainMenu();
     }
 
@@ -117,36 +119,25 @@ public class GameManager : MonoBehaviour
     private void SaveSettings()
     {
         if (musicSlider != null)
-        {
             PlayerPrefs.SetFloat("MusicVolume", musicSlider.value);
-        }
         
         if (soundSlider != null)
-        {
             PlayerPrefs.SetFloat("SoundVolume", soundSlider.value);
-        }
         
         PlayerPrefs.Save();
     }
 
     private void LoadSettings()
     {
-        // โหลดค่าจาก PlayerPrefs หรือใช้ค่าตั้งต้น 0.5
         float musicVolume = PlayerPrefs.GetFloat("MusicVolume", 0.5f);
         float soundVolume = PlayerPrefs.GetFloat("SoundVolume", 0.5f);
 
-        // ตั้งค่าสไลเดอร์
         if (musicSlider != null)
-        {
             musicSlider.value = musicVolume;
-        }
 
         if (soundSlider != null)
-        {
             soundSlider.value = soundVolume;
-        }
 
-        // ตั้งค่าเสียงใน AudioManager
         if (AudioManager.instance != null)
         {
             AudioManager.instance.SetMusicVolume(musicVolume);

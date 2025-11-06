@@ -7,47 +7,50 @@ public class PlayerShooter : MonoBehaviour
     public Transform firePoint;
     public float bulletSpeed = 20f;
     public float baseFireDelay = 0.5f;
-    public float detectionRadius = 20f; // ระยะตรวจหาศัตรู
+    public float detectionRadius = 20f;
     private float fireTimer = 0f;
 
     [Header("Power-up Settings")]
-    public int splashCount = 0;     // จำนวนกระสุนกระจาย
-    public int plusArrowCount = 0;  // จำนวน PlusArrow
-    [Header("Audio Settings")]
-    public AudioClip shootSound;          // เสียงยิงลูกธนู
-    public float minPitch = 0.95f;        // ค่าพิทช์ต่ำสุด
-    public float maxPitch = 1.15f;        // ค่าพิทช์สูงสุด
-    private float nextShootSoundTime = 0f;
+    public int splashCount = 0;
+    public int plusArrowCount = 0;
 
+    [Header("Audio Settings")]
+    public AudioClip shootSound;
+    public float minPitch = 0.95f;
+    public float maxPitch = 1.15f;
+    private float nextShootSoundTime = 0f;
+    private AudioSource localAudioSource; // ✅ สำหรับเล่นเสียงเอง
+
+    void Awake()
+    {
+        // สร้าง AudioSource ถ้ายังไม่มี
+        localAudioSource = gameObject.AddComponent<AudioSource>();
+        localAudioSource.playOnAwake = false;
+        localAudioSource.spatialBlend = 0f; // 2D sound
+        localAudioSource.volume = 1f;
+    }
 
     void Update()
     {
         fireTimer -= Time.deltaTime;
 
-        // ✅ ยิงอัตโนมัติเมื่อมีเป้าหมายใกล้ที่สุด
         if (fireTimer <= 0f)
         {
             Transform nearestEnemy = FindNearestEnemy();
 
             if (nearestEnemy != null)
             {
-                // หมุน firePoint ไปทางศัตรู
                 Vector3 dir = (nearestEnemy.position - firePoint.position).normalized;
                 firePoint.rotation = Quaternion.LookRotation(new Vector3(dir.x, 0f, dir.z));
 
-                // ยิงเลย
                 Shoot();
 
-                // delay ตามจำนวน plusArrow
                 float delayMultiplier = Mathf.Max(0.2f, 1f - plusArrowCount * 0.15f);
                 fireTimer = baseFireDelay * delayMultiplier;
             }
         }
     }
 
-    /// <summary>
-    /// 🔍 หาศัตรูที่อยู่ใกล้ Player ที่สุดในระยะที่กำหนด
-    /// </summary>
     Transform FindNearestEnemy()
     {
         Collider[] hitColliders = Physics.OverlapSphere(transform.position, detectionRadius);
@@ -78,21 +81,16 @@ public class PlayerShooter : MonoBehaviour
             return;
         }
 
-        // 🔊 เล่นเสียงยิงธนู / กระสุน
-        if (AudioManager.instance != null && shootSound != null)
+        // ✅ เล่นเสียงยิงโดยตรง ไม่ต้องผ่าน AudioManager
+        if (shootSound != null && Time.time >= nextShootSoundTime)
         {
-            // ป้องกันเสียงซ้อนถ้ายิงรัวมาก
-            if (Time.time >= nextShootSoundTime)
-            {
-                var src = AudioManager.instance.soundSource;
-                src.pitch = Random.Range(minPitch, maxPitch);
-                AudioManager.instance.PlaySound(shootSound);
-                src.pitch = 1f;
-                nextShootSoundTime = Time.time + 0.05f; // ดีเลย์สั้นๆ ป้องกันซ้อน
-            }
+            localAudioSource.pitch = Random.Range(minPitch, maxPitch);
+            localAudioSource.PlayOneShot(shootSound);
+            localAudioSource.pitch = 1f;
+            nextShootSoundTime = Time.time + 0.05f; // ป้องกันเสียงซ้อนรัวเกินไป
         }
 
-        // จากตรงนี้ลงไปคือโค้ดยิงเดิมของคุณ ↓
+        // ===== ยิงกระสุน =====
         int totalShoots = plusArrowCount + 1;
         int totalBullets = splashCount + 1;
         float spreadAngle = 10f;
@@ -128,10 +126,8 @@ public class PlayerShooter : MonoBehaviour
         }
     }
 
-
     private void OnTriggerEnter(Collider other)
     {
-        // 💥 เก็บ SplashArrow → เพิ่มกระสุนกระจาย
         if (other.CompareTag("SplashArrow"))
         {
             splashCount = Mathf.Min(splashCount + 1, 3);
@@ -139,7 +135,6 @@ public class PlayerShooter : MonoBehaviour
             Debug.Log("✨ เก็บ SplashArrow → ยิงกระจายเพิ่ม!");
         }
 
-        // 💥 เก็บ PlusArrow → ยิงหลายชุด / ยิงเร็วขึ้น
         if (other.CompareTag("PlusArrow"))
         {
             plusArrowCount = Mathf.Min(plusArrowCount + 1, 3);

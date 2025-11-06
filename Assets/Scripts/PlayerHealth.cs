@@ -20,14 +20,19 @@ public class PlayerHealth : MonoBehaviour
     public float flashSpeed = 0.1f;
 
     private bool isInvincible = false;
-    private bool isDead = false;
+    public bool isDead = false;
     private Renderer[] renderers;
     [Header("Audio")]
     public AudioClip hurtSound;
+     private AudioSource localAudioSource;
 
     void Start()
     {
         currentHealth = maxHealth;
+         localAudioSource = gameObject.AddComponent<AudioSource>();
+        localAudioSource.playOnAwake = false;
+        localAudioSource.spatialBlend = 0f; // เล่นเป็น 2D sound
+        localAudioSource.volume = 1f;
 
         if (healthBar == null)
         {
@@ -60,21 +65,14 @@ public class PlayerHealth : MonoBehaviour
         UpdateHealthUI();
 
         if (currentHealth <= 0)
-            Die(); // <-- เรียกฟังก์ชัน Die()
+            Die();
         else
             StartCoroutine(InvincibilityFlash());
 
-        // ✅ เล่นเสียงเจ็บทุกครั้งที่โดนตี
-        if (AudioManager.instance != null && hurtSound != null)
+        // ✅ เล่นเสียงเจ็บโดยตรง (ไม่ผ่าน AudioManager)
+        if (hurtSound != null)
         {
-            AudioManager.instance.PlaySound(hurtSound);
-        }
-
-        UpdateHealthUI();
-
-        if (currentHealth <= 0)
-        {
-            Die();
+            localAudioSource.PlayOneShot(hurtSound);
         }
     }
 
@@ -120,6 +118,9 @@ public class PlayerHealth : MonoBehaviour
     {
         isDead = true;
         Debug.Log("Player died!");
+        CircleSwordManager circle = FindObjectOfType<CircleSwordManager>();
+    if (circle != null)
+        circle.StopAllSounds();
 
         // ปิดการควบคุม
         PlayerController controller = GetComponent<PlayerController>();

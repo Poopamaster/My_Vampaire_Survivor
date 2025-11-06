@@ -16,6 +16,8 @@ public class CircleSwordManager : MonoBehaviour
     public AudioClip swordSpinSound;  // เสียงหมุนดาบ
     private AudioSource spinAudio;     // ลำโพงกลางของ Manager
 
+    private PlayerHealth playerHealth; // ✅ reference ผู้เล่น
+
     void Start()
     {
         // ✅ สร้าง AudioSource หนึ่งตัวสำหรับเสียงหมุนทั้งหมด
@@ -23,10 +25,20 @@ public class CircleSwordManager : MonoBehaviour
         spinAudio.playOnAwake = false;
         spinAudio.loop = true;
         spinAudio.spatialBlend = 0f;
+
+        // ✅ หา PlayerHealth เพื่อเช็กสถานะชีวิต
+        playerHealth = FindObjectOfType<PlayerHealth>();
     }
 
     void Update()
     {
+        // 🔥 ถ้าผู้เล่นตายแล้วให้หยุดเสียงและไม่อัปเดตอะไรอีก
+        if (playerHealth != null && playerHealth.isDead)
+        {
+            StopAllSounds();
+            return;
+        }
+
         UpdateSwordPositions();
 
         // ✅ ถ้ามีดาบ -> เปิดเสียง / ถ้าไม่มี -> ปิดเสียง
@@ -75,9 +87,16 @@ public class CircleSwordManager : MonoBehaviour
         }
         swords.Clear();
 
-        // ✅ หยุดเสียงทันทีเมื่อไม่มีดาบ
-        if (spinAudio.isPlaying)
+        StopAllSounds();
+    }
+
+    public void StopAllSounds()
+    {
+        // ✅ หยุดเสียงทันทีเมื่อผู้เล่นตายหรือไม่มีดาบ
+        if (spinAudio != null && spinAudio.isPlaying)
+        {
             spinAudio.Stop();
+        }
     }
 
     void OnTriggerEnter(Collider other)
