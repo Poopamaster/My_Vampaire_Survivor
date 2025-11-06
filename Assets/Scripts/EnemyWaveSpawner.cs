@@ -36,6 +36,8 @@ public class EnemyWaveSpawner : MonoBehaviour
     private Bounds areaBounds;
     private Coroutine roundCoroutine;
 
+
+
     void Start()
     {
         if (player == null)
@@ -80,7 +82,7 @@ public class EnemyWaveSpawner : MonoBehaviour
     {
         if (roundCoroutine != null)
             StopCoroutine(roundCoroutine);
-        
+
         roundCoroutine = StartCoroutine(RoundLoop());
     }
 
@@ -90,22 +92,18 @@ public class EnemyWaveSpawner : MonoBehaviour
 
         for (currentRound = 1; currentRound <= totalRounds; currentRound++)
         {
-            // เริ่ม Wave ใหม่
             isSpawning = true;
             currentRoundTimeRemaining = roundDuration;
             currentBreakTimeRemaining = 0f;
 
-            // เริ่ม Spawn ศัตรูทั้งหมดในกลุ่ม
             foreach (var group in enemyGroups)
                 StartCoroutine(SpawnEnemyGroup(group));
 
-            // รอจนกว่าเวลาของ Wave จะหมด
             yield return new WaitForSeconds(roundDuration);
 
             isSpawning = false;
             ClearAllEnemies();
-            
-            // ถ้ายังไม่ใช่ Wave สุดท้าย ให้พัก
+
             if (currentRound < totalRounds)
             {
                 currentBreakTimeRemaining = breakDuration;
@@ -113,13 +111,23 @@ public class EnemyWaveSpawner : MonoBehaviour
             }
         }
 
-        // จบเกม
         isSpawning = false;
         currentRoundTimeRemaining = 0f;
         currentBreakTimeRemaining = 0f;
-        
-        Debug.Log("All waves completed!");
+
+        Debug.Log("✅ All waves completed! YOU WIN!");
+
+        GameUIManager uiManager = FindObjectOfType<GameUIManager>();
+        if (uiManager != null)
+        {
+            uiManager.ShowWinScreen();
+        }
+        else
+        {
+            Debug.LogWarning("⚠️ GameUIManager not found in scene!");
+        }
     }
+
 
     IEnumerator SpawnEnemyGroup(EnemyGroupData group)
     {

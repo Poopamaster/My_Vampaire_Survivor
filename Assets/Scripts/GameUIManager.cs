@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
-using UnityEngine.SceneManagement; // <-- 1. ต้องเพิ่มบรรทัดนี้ เพื่อใช้ LoadScene
+using UnityEngine.SceneManagement;
+using System.Collections; // <-- 1. ต้องเพิ่มบรรทัดนี้ เพื่อใช้ LoadScene
 
 /// <summary>
 /// สคริปต์นี้จะคุม UI ทั้งหมดในฉากเกม
@@ -17,7 +18,7 @@ public class GameUIManager : MonoBehaviour
         // 4. ซ่อน Panel ทั้งหมดตอนเริ่มเกม (กันลืม)
         if (gameOverPanel != null)
             gameOverPanel.SetActive(false);
-        
+
         if (winPanel != null)
             winPanel.SetActive(false);
     }
@@ -28,34 +29,53 @@ public class GameUIManager : MonoBehaviour
         if (gameOverPanel == null) return;
 
         gameOverPanel.SetActive(true); // 5. เปิดหน้า Game Over
-        
+
         // 6. หยุดเกม (หยุดทุกอย่างในฉาก)
-        Time.timeScale = 0f; 
+        Time.timeScale = 0f;
 
         // 7. โชว์เมาส์ และปลดล็อกเมาส์ (เพื่อให้คลิกปุ่ม Quit ได้)
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
     }
 
-    // --- ฟังก์ชันนี้คุณจะเรียกจาก "สคริปต์อื่น" เมื่อชนะ ---
     public void ShowWinScreen()
     {
         if (winPanel == null) return;
 
-        winPanel.SetActive(true); // เปิดหน้า Win
-        Time.timeScale = 0f; // หยุดเกม
-        
+        StopAllCoroutines();
+
+        winPanel.SetActive(true);
+
+        // ป้องกันการถูกปิดอัตโนมัติ
+        winPanel.transform.SetAsLastSibling(); // เอามาอยู่หน้าสุดใน Canvas
+
+        Time.timeScale = 0f;
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
+
+        Debug.Log("✅ WinPanel ถูกเปิดและจะอยู่ค้างไว้จนผู้เล่นกดปุ่ม Quit");
+    }
+
+
+
+    private IEnumerator ShowWinDelayed()
+    {
+        winPanel.SetActive(true);
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+
+        // รอ 0.1 วินาทีให้ UI Render ก่อน
+        yield return new WaitForSecondsRealtime(0.1f);
+        Time.timeScale = 0f;
     }
 
     // --- ฟังก์ชันนี้สำหรับ "ปุ่ม Quit" ---
     public void QuitToMainMenu()
     {
         // 8. (สำคัญมาก!) ต้องปรับเวลาให้กลับเป็นปกติก่อนโหลดฉากใหม่
-        Time.timeScale = 1f; 
-        
+        Time.timeScale = 1f;
+
         // 9. กลับไปหน้าเมนู (ตามชื่อที่คุณบอก)
-        SceneManager.LoadScene("StartScenes"); 
+        SceneManager.LoadScene("StartScenes");
     }
 }

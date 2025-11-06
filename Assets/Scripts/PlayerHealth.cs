@@ -15,7 +15,7 @@ public class PlayerHealth : MonoBehaviour
     // --- 1. เพิ่มบรรทัดนี้ ---
     // (ลาก GameUIManager มาใส่ในช่องนี้)
     [Header("Game Over")]
-    public GameUIManager uiManager; 
+    public GameUIManager uiManager;
 
     [Header("Damage Settings")]
     public float invincibilityTime = 0.5f;
@@ -28,13 +28,27 @@ public class PlayerHealth : MonoBehaviour
     void Start()
     {
         currentHealth = maxHealth;
+
+        if (healthBar == null)
+        {
+            healthBar = GameObject.Find("HealthBar")?.GetComponent<Slider>();
+            Debug.LogWarning($"[AutoBind] healthBar not assigned — auto found: {healthBar}");
+        }
+
+        if (healthFill == null && healthBar != null)
+        {
+            healthFill = healthBar.fillRect.GetComponent<Image>();
+        }
+
         if (healthBar != null)
         {
             healthBar.maxValue = maxHealth;
             healthBar.value = currentHealth;
         }
+
         renderers = GetComponentsInChildren<Renderer>();
     }
+
 
     public void TakeDamage(float amount)
     {
