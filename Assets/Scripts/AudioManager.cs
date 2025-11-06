@@ -38,10 +38,10 @@ public class AudioManager : MonoBehaviour
     {
         // ตั้งค่าเสียงเริ่มต้น
         SetInitialVolumes();
-        
+
         // เล่นเพลงเริ่มต้นตาม scene
         PlaySceneMusic(SceneManager.GetActiveScene().name);
-        
+
         // ฟังการเปลี่ยน scene
         SceneManager.sceneLoaded += OnSceneLoaded;
     }
@@ -138,4 +138,21 @@ public class AudioManager : MonoBehaviour
     {
         SceneManager.sceneLoaded -= OnSceneLoaded;
     }
+
+    public void MuteAllSFX(bool mute)
+    {
+        if (soundSource != null)
+        {
+            soundSource.mute = mute;
+        }
+    }
+
+    public void PlaySound(AudioClip clip, float volume = 3f)
+    {
+        if (soundSource != null && clip != null)
+        {
+            soundSource.PlayOneShot(clip, volume);
+        }
+    }
+
 }

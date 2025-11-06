@@ -3,6 +3,7 @@ using System.Collections.Generic;
 
 public class CircleSwordManager : MonoBehaviour
 {
+    [Header("Sword Settings")]
     public GameObject swordPrefab;
     public int maxSwords = 8;
     public float radius = 2f;
@@ -11,9 +12,37 @@ public class CircleSwordManager : MonoBehaviour
 
     private List<GameObject> swords = new List<GameObject>();
 
+    [Header("Audio Settings")]
+    public AudioClip swordSpinSound;  // เสียงหมุนดาบ
+    private AudioSource spinAudio;     // ลำโพงกลางของ Manager
+
+    void Start()
+    {
+        // ✅ สร้าง AudioSource หนึ่งตัวสำหรับเสียงหมุนทั้งหมด
+        spinAudio = gameObject.AddComponent<AudioSource>();
+        spinAudio.playOnAwake = false;
+        spinAudio.loop = true;
+        spinAudio.spatialBlend = 0f;
+    }
+
     void Update()
     {
         UpdateSwordPositions();
+
+        // ✅ ถ้ามีดาบ -> เปิดเสียง / ถ้าไม่มี -> ปิดเสียง
+        if (swords.Count > 0)
+        {
+            if (!spinAudio.isPlaying && swordSpinSound != null)
+            {
+                spinAudio.clip = swordSpinSound;
+                spinAudio.Play();
+            }
+        }
+        else
+        {
+            if (spinAudio.isPlaying)
+                spinAudio.Stop();
+        }
     }
 
     void UpdateSwordPositions()
@@ -37,13 +66,27 @@ public class CircleSwordManager : MonoBehaviour
         UpdateSwordPositions();
     }
 
+    public void RemoveAllSwords()
+    {
+        foreach (var sword in swords)
+        {
+            if (sword != null)
+                Destroy(sword);
+        }
+        swords.Clear();
+
+        // ✅ หยุดเสียงทันทีเมื่อไม่มีดาบ
+        if (spinAudio.isPlaying)
+            spinAudio.Stop();
+    }
+
     void OnTriggerEnter(Collider other)
     {
-        // ถ้าชนกับ pickup ที่มี tag CircleSword
+        // 💎 เก็บ Pickup ที่มี Tag "CircleSword"
         if (other.CompareTag("CircleSword"))
         {
             AddSword();
-            Destroy(other.gameObject); // ลบ pickup ออกจากฉาก
+            Destroy(other.gameObject);
         }
     }
 }

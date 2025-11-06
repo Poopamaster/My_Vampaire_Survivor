@@ -19,6 +19,8 @@ public class FloatingItem : MonoBehaviour
     private Vector3 startPos;
     private Light auraLight;
     private float lifeTimer;
+    public AudioClip pickupSound;
+
 
     void Start()
     {
@@ -62,4 +64,16 @@ public class FloatingItem : MonoBehaviour
             Physics.IgnoreCollision(collision.collider, GetComponent<Collider>());
         }
     }
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.CompareTag("Player"))
+        {
+            // 🔊 เสียงเก็บของ
+            if (AudioManager.instance != null && pickupSound != null)
+                AudioManager.instance.PlaySound(pickupSound);
+
+            Destroy(gameObject);
+        }
+    }
+
 }

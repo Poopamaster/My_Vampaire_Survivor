@@ -4,15 +4,22 @@ public class Arrow : MonoBehaviour
 {
     public float lifeTime = 5f;
     public float damage = 10.0f; // ✅ เพิ่มค่าดาเมจลูกธนู
+    public AudioClip arrowShootSound;
+
 
     void Start()
     {
         Destroy(gameObject, lifeTime);
-
         Rigidbody rb = GetComponent<Rigidbody>();
-        if (rb != null)
+        if (rb != null) rb.useGravity = false;
+
+        // 🔊 เล่นเสียงยิงลูกธนู (เสียงจะเร็วขึ้นตามการยิง)
+        if (AudioManager.instance != null && arrowShootSound != null)
         {
-            rb.useGravity = false;
+            AudioSource src = AudioManager.instance.soundSource;
+            src.pitch = Random.Range(0.9f, 1.2f); // ปรับความเร็วเสียง
+            AudioManager.instance.PlaySound(arrowShootSound);
+            src.pitch = 1f; // รีเซ็ต pitch หลังเล่น
         }
     }
 
@@ -34,6 +41,6 @@ public class Arrow : MonoBehaviour
         }
 
         // ทำลายลูกธนูหลังชนอะไรก็ได้
-        
+
     }
 }

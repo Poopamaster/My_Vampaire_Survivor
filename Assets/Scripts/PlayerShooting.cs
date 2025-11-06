@@ -13,6 +13,12 @@ public class PlayerShooter : MonoBehaviour
     [Header("Power-up Settings")]
     public int splashCount = 0;     // จำนวนกระสุนกระจาย
     public int plusArrowCount = 0;  // จำนวน PlusArrow
+    [Header("Audio Settings")]
+    public AudioClip shootSound;          // เสียงยิงลูกธนู
+    public float minPitch = 0.95f;        // ค่าพิทช์ต่ำสุด
+    public float maxPitch = 1.15f;        // ค่าพิทช์สูงสุด
+    private float nextShootSoundTime = 0f;
+
 
     void Update()
     {
@@ -72,14 +78,27 @@ public class PlayerShooter : MonoBehaviour
             return;
         }
 
+        // 🔊 เล่นเสียงยิงธนู / กระสุน
+        if (AudioManager.instance != null && shootSound != null)
+        {
+            // ป้องกันเสียงซ้อนถ้ายิงรัวมาก
+            if (Time.time >= nextShootSoundTime)
+            {
+                var src = AudioManager.instance.soundSource;
+                src.pitch = Random.Range(minPitch, maxPitch);
+                AudioManager.instance.PlaySound(shootSound);
+                src.pitch = 1f;
+                nextShootSoundTime = Time.time + 0.05f; // ดีเลย์สั้นๆ ป้องกันซ้อน
+            }
+        }
+
+        // จากตรงนี้ลงไปคือโค้ดยิงเดิมของคุณ ↓
         int totalShoots = plusArrowCount + 1;
         int totalBullets = splashCount + 1;
-
         float spreadAngle = 10f;
         float startAngle = -spreadAngle * (totalBullets - 1) / 2f;
         float distanceFromPlayer = 2.0f;
         float verticalOffsetPerSet = 0.4f;
-
         Collider playerCol = GetComponent<Collider>();
 
         for (int p = 0; p < totalShoots; p++)
@@ -108,6 +127,7 @@ public class PlayerShooter : MonoBehaviour
             }
         }
     }
+
 
     private void OnTriggerEnter(Collider other)
     {

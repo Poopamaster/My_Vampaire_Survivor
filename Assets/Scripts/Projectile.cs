@@ -4,6 +4,8 @@ public class Projectile : MonoBehaviour
 {
     public float damage = 10f;
     public float lifeTime = 5f;
+    public AudioClip hitPlayerSound;
+
 
     void Start()
     {
@@ -18,6 +20,10 @@ public class Projectile : MonoBehaviour
             if (player != null)
             {
                 player.TakeDamage(damage);
+
+                // 🔊 เสียงตอนผู้เล่นโดนโจมตี
+                if (AudioManager.instance != null && hitPlayerSound != null)
+                    AudioManager.instance.PlaySound(hitPlayerSound);
             }
         }
 

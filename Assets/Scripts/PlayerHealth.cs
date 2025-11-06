@@ -12,8 +12,6 @@ public class PlayerHealth : MonoBehaviour
     public Slider healthBar;
     public Image healthFill;
 
-    // --- 1. เพิ่มบรรทัดนี้ ---
-    // (ลาก GameUIManager มาใส่ในช่องนี้)
     [Header("Game Over")]
     public GameUIManager uiManager;
 
@@ -24,6 +22,8 @@ public class PlayerHealth : MonoBehaviour
     private bool isInvincible = false;
     private bool isDead = false;
     private Renderer[] renderers;
+    [Header("Audio")]
+    public AudioClip hurtSound;
 
     void Start()
     {
@@ -63,6 +63,19 @@ public class PlayerHealth : MonoBehaviour
             Die(); // <-- เรียกฟังก์ชัน Die()
         else
             StartCoroutine(InvincibilityFlash());
+
+        // ✅ เล่นเสียงเจ็บทุกครั้งที่โดนตี
+        if (AudioManager.instance != null && hurtSound != null)
+        {
+            AudioManager.instance.PlaySound(hurtSound,2f);
+        }
+
+        UpdateHealthUI();
+
+        if (currentHealth <= 0)
+        {
+            Die();
+        }
     }
 
     public void Heal(float amount)

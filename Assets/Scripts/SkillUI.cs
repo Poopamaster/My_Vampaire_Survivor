@@ -1,13 +1,20 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using System.Collections;
 
 public class SkillUI : MonoBehaviour
 {
     [Header("Skill Settings")]
     public KeyCode skillKey = KeyCode.E;
     public float skillCooldown = 20f;
-    
+
+    [Header("Skill Effect Settings")]
+    public float skillDamage = 50f;
+    public float slowDuration = 3f;
+    public float slowMultiplier = 0.5f; // ลดความเร็วลง 50%
+    public GameObject skillEffectPrefab; // เอฟเฟกต์ตอนใช้สกิล (optional)
+
     [Header("UI References")]
     public Image skillIcon;
     public Image cooldownOverlay;
@@ -17,19 +24,29 @@ public class SkillUI : MonoBehaviour
     private bool isCooldown = false;
     private float currentCooldown = 0f;
 
+    [Header("Audio Settings")]
+    public AudioClip skillSound;       // เสียงสกิล
+    public AudioSource audioSource;
+
     void Start()
     {
         if (keyText != null)
             keyText.text = skillKey.ToString();
-            
+
         if (cooldownOverlay != null)
         {
-            cooldownOverlay.fillAmount = 0f; // <-- (แก้จุดที่ 1: ตรวจสอบว่าเริ่มที่ 0)
+            cooldownOverlay.fillAmount = 0f;
             cooldownOverlay.gameObject.SetActive(false);
         }
-        
+
         if (cooldownText != null)
             cooldownText.gameObject.SetActive(false);
+
+        if (audioSource == null)
+        {
+            audioSource = gameObject.AddComponent<AudioSource>();
+            audioSource.playOnAwake = false;
+        }
     }
 
     void Update()
@@ -41,7 +58,7 @@ public class SkillUI : MonoBehaviour
 
         if (isCooldown)
         {
-            currentCooldown -= Time.deltaTime;
+            currentCooldown -= Time.unscaledDeltaTime;
             UpdateCooldownUI();
 
             if (currentCooldown <= 0f)
@@ -54,7 +71,76 @@ public class SkillUI : MonoBehaviour
     void UseSkill()
     {
         Debug.Log("Skill Used!");
+
+        if (skillSound != null && audioSource != null)
+            audioSource.PlayOneShot(skillSound);
+
+        StartCoroutine(ActivateSkillEffect());
         StartCooldown();
+    }
+
+    IEnumerator ActivateSkillEffect()
+    {
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+
+        GameObject effect = null;
+        float explosionRadius = 15f; // 🔹 ระยะรัศมีของสกิล (ปรับได้)
+        float delayBeforeDamage = 0.7f; // 🔹 เวลารอก่อนจะทำดาเมจ (ตามจังหวะ animation)
+
+        // 1️⃣ สร้างเอฟเฟกต์สกิลที่ตำแหน่งผู้เล่น
+        if (skillEffectPrefab != null && player != null)
+        {
+            effect = Instantiate(skillEffectPrefab, player.transform.position + Vector3.up * 1.0f, Quaternion.identity);
+        }
+
+        // 2️⃣ รอ animation เล่นช่วงแรก
+        yield return new WaitForSeconds(delayBeforeDamage);
+
+        // 3️⃣ หาศัตรูในรัศมี explosionRadius
+        Collider[] hitColliders = Physics.OverlapSphere(player.transform.position, explosionRadius);
+
+        foreach (Collider col in hitColliders)
+        {
+            if (col.CompareTag("Enemy"))
+            {
+                EnemyController enemyCtrl = col.GetComponent<EnemyController>();
+                if (enemyCtrl != null)
+                {
+                    float originalSpeed = enemyCtrl.moveSpeed;
+
+                    enemyCtrl.TakeDamage(skillDamage);
+
+                    if (enemyCtrl.health > 0)
+                        StartCoroutine(SlowEnemy(enemyCtrl, originalSpeed));
+                }
+            }
+        }
+
+        // 4️⃣ ทำลาย effect หลัง animation เล่นจบ
+        if (effect != null)
+        {
+            Animator anim = effect.GetComponent<Animator>();
+            if (anim != null)
+            {
+                float animLength = anim.GetCurrentAnimatorStateInfo(0).length;
+                Destroy(effect, animLength + 0.1f);
+            }
+            else
+            {
+                Destroy(effect, 1f); // fallback
+            }
+        }
+    }
+
+
+    IEnumerator SlowEnemy(EnemyController enemy, float originalSpeed)
+    {
+        enemy.moveSpeed = originalSpeed * slowMultiplier;
+        yield return new WaitForSeconds(slowDuration);
+        if (enemy != null)
+        {
+            enemy.moveSpeed = originalSpeed; // คืนความเร็ว
+        }
     }
 
     void StartCooldown()
@@ -65,13 +151,12 @@ public class SkillUI : MonoBehaviour
         if (cooldownOverlay != null)
         {
             cooldownOverlay.gameObject.SetActive(true);
-            cooldownOverlay.fillAmount = 0f; // <-- (แก้จุดที่ 2: เริ่มที่ 0 (ว่างเปล่า))
+            cooldownOverlay.fillAmount = 0f;
         }
-        
+
         if (cooldownText != null)
             cooldownText.gameObject.SetActive(true);
 
-        // ทำให้ icon มืดลง (กลายเป็นสีอ่อน)
         if (skillIcon != null)
             skillIcon.color = new Color(0.5f, 0.5f, 0.5f, 0.7f);
     }
@@ -80,10 +165,9 @@ public class SkillUI : MonoBehaviour
     {
         if (cooldownOverlay != null)
         {
-            // (แก้จุดที่ 3: คำนวณแบบกลับด้าน ให้มัน "เติม" จาก 0 ไป 1)
             cooldownOverlay.fillAmount = 1.0f - (currentCooldown / skillCooldown);
         }
-        
+
         if (cooldownText != null)
         {
             cooldownText.text = Mathf.Ceil(currentCooldown).ToString();
@@ -97,16 +181,14 @@ public class SkillUI : MonoBehaviour
 
         if (cooldownOverlay != null)
             cooldownOverlay.gameObject.SetActive(false);
-        
+
         if (cooldownText != null)
             cooldownText.gameObject.SetActive(false);
 
-        // คืนค่า icon เป็นปกติ (กลับมาเข้ม)
         if (skillIcon != null)
             skillIcon.color = Color.white;
     }
 
-    // (ฟังก์ชันอื่นๆ เหมือนเดิม)
     public bool TryUseSkill()
     {
         if (!isCooldown)

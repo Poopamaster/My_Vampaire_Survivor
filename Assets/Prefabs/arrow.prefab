@@ -148,3 +148,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   lifeTime: 5
   damage: 10
+  arrowShootSound: {fileID: 8300000, guid: ffaec98d4785d14428d04d1157f33b50, type: 3}
