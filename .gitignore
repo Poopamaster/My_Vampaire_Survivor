@@ -62,3 +62,6 @@ Thumbs.db
 
 # Builds you keep inside project (ปรับชื่อโฟลเดอร์ได้)
 [Bb]uild_*/
+Build_Foxy_Survivor.zip
+webgl.zip
+webgl

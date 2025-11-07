@@ -21,7 +21,6 @@ public class EnemyWaveSpawner : MonoBehaviour
     public int totalRounds = 15;
     public float roundDuration = 45f;
     public float breakDuration = 3f;
-    public float difficultyMultiplier = 1.18f;
 
     [Header("UI Reference")]
     public WaveUI waveUI;
@@ -33,10 +32,9 @@ public class EnemyWaveSpawner : MonoBehaviour
     public float currentBreakTimeRemaining = 0f;
 
     public bool canDropItem = true;
+
     private Bounds areaBounds;
     private Coroutine roundCoroutine;
-
-
 
     void Start()
     {
@@ -65,7 +63,6 @@ public class EnemyWaveSpawner : MonoBehaviour
 
     void Update()
     {
-        // อัพเดทเวลาเหลือสำหรับ UI
         if (isSpawning)
         {
             currentRoundTimeRemaining -= Time.deltaTime;
@@ -119,15 +116,10 @@ public class EnemyWaveSpawner : MonoBehaviour
 
         GameUIManager uiManager = FindObjectOfType<GameUIManager>();
         if (uiManager != null)
-        {
             uiManager.ShowWinScreen();
-        }
         else
-        {
             Debug.LogWarning("⚠️ GameUIManager not found in scene!");
-        }
     }
-
 
     IEnumerator SpawnEnemyGroup(EnemyGroupData group)
     {
@@ -152,14 +144,6 @@ public class EnemyWaveSpawner : MonoBehaviour
 
         GameObject enemy = Instantiate(prefab, spawnPos, Quaternion.identity);
         enemy.tag = "Enemy";
-
-        EnemyController e = enemy.GetComponent<EnemyController>();
-        if (e != null)
-        {
-            float diff = Mathf.Pow(difficultyMultiplier, currentRound - 1);
-            e.moveSpeed *= diff;
-            e.health *= diff;
-        }
     }
 
     Vector3 RandomPointInPlane()
@@ -167,7 +151,6 @@ public class EnemyWaveSpawner : MonoBehaviour
         float x = Random.Range(areaBounds.min.x, areaBounds.max.x);
         float z = Random.Range(areaBounds.min.z, areaBounds.max.z);
         float y = areaBounds.center.y;
-
         return new Vector3(x, y, z);
     }
 
@@ -177,19 +160,7 @@ public class EnemyWaveSpawner : MonoBehaviour
             Destroy(e);
     }
 
-    // Method สำหรับดึงสถานะปัจจุบัน (ใช้โดย UI)
-    public bool IsInBreakTime()
-    {
-        return !isSpawning && currentRound < totalRounds && currentRound > 0;
-    }
-
-    public float GetRoundTimeRemaining()
-    {
-        return currentRoundTimeRemaining;
-    }
-
-    public float GetBreakTimeRemaining()
-    {
-        return currentBreakTimeRemaining;
-    }
+    public bool IsInBreakTime() => !isSpawning && currentRound < totalRounds && currentRound > 0;
+    public float GetRoundTimeRemaining() => currentRoundTimeRemaining;
+    public float GetBreakTimeRemaining() => currentBreakTimeRemaining;
 }
